@@ -1,0 +1,75 @@
+#!/bin/bash
+
+check_ping() {
+    local host=$1
+    # Ping the host and check the exit status
+    ping -c 4 $host > /dev/null 2>&1
+
+    if [ $? -eq 0 ]; then
+        echo "Ping to $host was successful."
+    else
+        echo "Ping to $host failed."
+    fi
+}
+
+check_if_root() {
+    user=$(whoami)
+    if [ "$user" != "root" ]; then
+        echo "$user (not root)"
+    else 
+        echo $user
+    fi
+}
+
+
+check_firewalls() {
+    if command -v ufw >/devnull; then
+        echo "$(sudo ufw status)"
+    elif command -v firewall-cmd >/devnull; then
+        echo "$(sudo firewall-cmd --state)"
+    else
+        echo "No firewall installed"
+    fi
+}
+
+check_updates() {
+    if command -v yum >/devnull; then
+        echo $(sudo yum check-update)
+    elif command -v apt-get >/devnull; then
+        result=$(sudo apt-get --simulate upgrade)
+        echo $result | awk '{for (i=12; i<=NF; i++) printf $i " "; print ""}'
+    else
+        echo "Can not find any commands."
+    fi
+}
+#Save the data to variables
+local_ip=$(hostname -I)
+gateway=$(ip route | grep default | awk '{print $3}')
+public_ip=$(curl -s ifconfig.me)
+ping_8=$(check_ping 8.8.8.8)
+ping_google=$(check_ping google.com)
+current_user=$(check_if_root)
+#REMOVE COMMENT: Vill Jonas ha -tuln eller -l och grep LISTEN?
+ports=$(ss -tuln | grep LISTEN)
+firewall_status=$(check_firewalls)
+#Gathers the Operating System values and takes the value from the 3rd until the final number of record.
+linux_version=$(hostnamectl | grep "Operating System" | awk '{for (i=3; i<=NF; i++) printf $i " "; print ""}')
+updates=$(check_updates)
+
+# Save the captured data to a file
+output_file="JEDU_output.txt"
+echo -e "The local IP address is: $local_ip\n"\
+"The gateway address is: $gateway\n"\
+"The public IP adress is: $public_ip\n"\
+"$ping_8\n"\
+"$ping_google\n"\
+"The current user is: $current_user\n"\
+"The listening ports are: \n$ports\n"\
+"The firewall status is: $firewall_status\n"\
+"The linux version installed is: $linux_version\n"\
+"Updates: $updates\n"\
+> $output_file
+
+# Confirm the file creation
+echo "JEDU output saved to $output_file"
+
