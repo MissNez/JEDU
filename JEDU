@@ -22,9 +22,9 @@ check_if_root() {
 }
 
 check_firewalls() {
-    if command -v ufw >/devnull; then
+    if command -v ufw > /devnull; then
         echo "$(sudo ufw status)"
-    elif command -v firewall-cmd >/devnull; then
+    elif command -v firewall-cmd > /devnull; then
         echo "$(sudo firewall-cmd --state)"
     else
         echo "No firewall installed"
@@ -32,10 +32,10 @@ check_firewalls() {
 }
 
 check_updates() {
-    if command -v yum >/devnull; then
+    if command -v yum > /devnull; then
         echo $(sudo yum check-update)
-    elif command -v apt-get >/devnull; then
-        local result=$(sudo apt-get --simulate upgrade)
+    elif command -v apt-get > /devnull; then
+        local result=$(sudo apt --simulate upgrade)
         echo $result | awk '{for (i=12; i<=NF; i++) printf $i " "; print ""}'
     else
         echo "Can not find any commands."
@@ -75,12 +75,6 @@ info() {
     echo "JEDU output saved to $output_file"
 }
 
-upload() {
-    curl    -X POST "127.0.0.1:5000/save" \
-            -H "Content-Type: multipart/form-data" \
-            -F "file=@$2"
-}
-
 upload_file() {
     local file_path=$1
 
@@ -102,6 +96,13 @@ upload_file() {
     echo "Response: $response"
 }
 
+start() {
+    local file_name = $3
+    yq '.start[]' $file_name | while read -r cmd; do
+        echo "--- Executing: $cmd ---"
+        eval $cmd
+    done
+}
 
 if [ "$1" == "info" ]; then
     info
@@ -109,4 +110,15 @@ if [ "$1" == "info" ]; then
 elif [ "$1" == "upload" ] && [ -n "$2" ]; then
     upload_file "$2"
     exit 0
+elif [ "$1" == "lab" ] && [ -n "$2" ] && [ -n "$3" ]; then
+    if [ "$2" == "start" ]; then
+        start $3
+        exit 0
+    elif [ "$2" == "finish" ]; then
+        exit 0
+    elif [ "$2" == "grade" ]; then
+        exit 0
+    elif [ "$2" == "hint" ]; then
+        exit 0
+    fi
 fi
