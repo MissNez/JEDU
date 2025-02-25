@@ -13,7 +13,7 @@ check_ping() {
 }
 
 check_if_root() {
-    user=$(whoami)
+    local user=$(whoami)
     if [ "$user" != "root" ]; then
         echo "$user (not root)"
     else 
@@ -35,7 +35,7 @@ check_updates() {
     if command -v yum >/devnull; then
         echo $(sudo yum check-update)
     elif command -v apt-get >/devnull; then
-        result=$(sudo apt-get --simulate upgrade)
+        local result=$(sudo apt-get --simulate upgrade)
         echo $result | awk '{for (i=12; i<=NF; i++) printf $i " "; print ""}'
     else
         echo "Can not find any commands."
@@ -75,9 +75,38 @@ info() {
     echo "JEDU output saved to $output_file"
 }
 
+upload() {
+    curl    -X POST "127.0.0.1:5000/save" \
+            -H "Content-Type: multipart/form-data" \
+            -F "file=@$2"
+}
+
+upload_file() {
+    local file_path=$1
+
+    # Check if the file exists
+    if [ ! -f "$file_path" ]; then
+        echo "File not found: $file_path"
+        exit 1
+    fi
+
+    # URL of the API endpoint
+    API_URL="127.0.0.1:5000/save"
+
+    # Send the file using curl
+    response=$(curl -s -X POST "$API_URL" \
+         -H "Content-Type: multipart/form-data" \
+         -F "file=@$file_path")
+
+    # Output the response
+    echo "Response: $response"
+}
+
+
 if [ "$1" == "info" ]; then
     info
     exit 0
-else 
-    echo "error"
+elif [ "$1" == "upload" ] && [ -n "$2" ]; then
+    upload_file "$2"
+    exit 0
 fi
