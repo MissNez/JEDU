@@ -97,7 +97,7 @@ upload_file() {
 }
 
 start() {
-    local file_name = $3
+    local file_name=$1
     yq '.start[]' $file_name | while read -r cmd; do
         echo "--- Executing: $cmd ---"
         eval $cmd
