@@ -5,7 +5,6 @@ import os
   
 app = Flask(__name__) 
   
-  
 @app.route('/') 
 @app.route('/home') 
 def index(): 
@@ -15,8 +14,8 @@ connect = sqlite3.connect('database.db')
 connect.execute( 
     'CREATE TABLE IF NOT EXISTS FILES ( \
         id INTEGER PRIMARY KEY AUTOINCREMENT, \
-        filename TEXT, \
-        file_data BLOB NOT NULL)') 
+        filename TEXT NOT NULL, \
+        file_path TEXT NOT NULL)') 
 
 @app.route('/save', methods=['POST'])
 def upload_file():
@@ -40,12 +39,12 @@ def upload_file():
     # Save the file data to the database
     conn = sqlite3.connect("database.db")
     cur = conn.cursor()
-    cur.execute('INSERT INTO files (filename, file_data) VALUES (?, ?)', (file.filename, file_data))
+    cur.execute('INSERT INTO files (filename, file_path) VALUES (?, ?)', (file.filename, file_path))
     conn.commit()
     conn.close()
 
     # Remove the temporary file
-    os.remove(file_path)
+    #os.remove(file_path)
 
     return jsonify({'message': 'File uploaded and saved successfully'}), 201
 
