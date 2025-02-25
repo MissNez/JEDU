@@ -39,8 +39,8 @@ def upload_file():
 
     # Save the file data to the database
     conn = sqlite3.connect("database.db")
-    cursor = conn.cursor()
-    cursor.execute('INSERT INTO files (filename, file_data) VALUES (?, ?)', (file.filename, file_data))
+    cur = conn.cursor()
+    cur.execute('INSERT INTO files (filename, file_data) VALUES (?, ?)', (file.filename, file_data))
     conn.commit()
     conn.close()
 
@@ -51,11 +51,11 @@ def upload_file():
 
 @app.route('/files') 
 def files(): 
-    connect = sqlite3.connect('database.db') 
-    cursor = connect.cursor() 
-    cursor.execute('SELECT * FROM FILES') 
+    conn = sqlite3.connect('database.db') 
+    cur = conn.cursor() 
+    cur.execute('SELECT * FROM FILES') 
   
-    data = cursor.fetchall() 
+    data = cur.fetchall() 
     print(data)
     return render_template("files.html", data=data)  
 
